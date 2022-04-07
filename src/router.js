@@ -3,7 +3,6 @@ import {View, Text} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import HomeScreen from './homeScreen';
-import EmployEntry from './screens/employEntry';
 const Stack = createNativeStackNavigator();
 
 function Router() {
@@ -15,12 +14,12 @@ function Router() {
           component={HomeScreen}
           // options={{headerShown: false}}
         />
-        <Stack.Screen
+        {/* <Stack.Screen
           // options={{presentation: 'modal'}}
           name="Add / Edit Employee"
           component={EmployEntry}
           // options={{headerShown: false}}
-        />
+        /> */}
       </Stack.Navigator>
     </NavigationContainer>
   );
