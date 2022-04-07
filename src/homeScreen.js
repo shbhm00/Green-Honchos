@@ -35,13 +35,13 @@ export default function HomeScreen() {
       const {result} = await response.json();
       console.log('result', result);
       setData([...data, ...result.products]);
-      let sort = result.sort.filter(item => item.code != 'price');
+      let sort = result.sort.filter(item => item.code !== 'price');
       setSortData([
         ...sort,
         {code: 'priceLTH', label: 'low to high'},
         {code: 'priceHTL', label: 'high to low'},
       ]);
-      setFilterData(result.filters);
+      setFilterData([...filterData, ...result.filters]);
     } catch (error) {
       console.log('error', error);
     }

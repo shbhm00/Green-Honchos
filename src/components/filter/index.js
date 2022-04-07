@@ -10,11 +10,20 @@ import {
 import React, {useState} from 'react';
 import {vh, vw, normalize} from '../../utils/dimension';
 import HorizontalLine from '../../utils/horizontalLine';
+import ToggleCheckBox from '../toggleCheckBox';
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 export default function Filter({onClose, data}) {
-  const [focusedData, setFocusedData] = useState({isFocused: false, data: []});
-  console.log('dtaaaa', data);
+  const [focusedData, setFocusedData] = useState({
+    isFocused: false,
+    data: [],
+    FocusedIndex: null,
+  });
+  const [checked, setChecked] = useState({
+    clicked: false,
+    selectedIndex: new Set(),
+  });
+  console.log('checked', checked);
   const leftSideContainer = () => {
     console.log('dataaaa at categoryyy', focusedData.data);
     return (
@@ -22,12 +31,27 @@ export default function Filter({onClose, data}) {
         {data.map((item, index) => {
           return (
             <TouchableOpacity
-              style={[styles.categoryButton]}
+              style={[
+                styles.categoryButton,
+                {
+                  backgroundColor:
+                    focusedData.isFocused && focusedData.FocusedIndex === index
+                      ? 'white'
+                      : '#f8f9fa',
+                },
+                {
+                  borderColor:
+                    focusedData.isFocused && focusedData.FocusedIndex === index
+                      ? 'white'
+                      : 'rgba(150, 150, 150, 0.2)',
+                },
+              ]}
               onPress={() =>
                 setFocusedData({
                   ...focusedData,
                   isFocused: true,
                   data: [...item.options],
+                  FocusedIndex: index,
                 })
               }>
               <Text style={styles.categoryText}>{item.filter_lable}</Text>
@@ -37,6 +61,14 @@ export default function Filter({onClose, data}) {
       </View>
     );
   };
+  const toggleOnPress = (_, index) => {
+    setChecked({
+      ...checked,
+      clicked: checked.selectedIndex.has(index)
+        ? checked.selectedIndex.delete(index) && false
+        : checked.selectedIndex.add(index) && true,
+    });
+  };
   const rightSideContainer = () => {
     return (
       <View styles={styles.rightContainer}>
@@ -45,6 +77,10 @@ export default function Filter({onClose, data}) {
             {focusedData.data.map((item, index) => {
               return (
                 <View style={styles.subcategoryValue}>
+                  <ToggleCheckBox
+                    onPress={() => toggleOnPress(item, index)}
+                    checked={checked.selectedIndex.has(index)}
+                  />
                   {item.color_code ? (
                     <View
                       style={{
@@ -148,13 +184,13 @@ const styles = StyleSheet.create({
   },
   rightContainer: {
     width: '60%',
-    backgroundColor: 'green',
+
     height: screenHeight,
   },
   categoryButton: {
     padding: vh(15),
     borderWidth: 0.5,
-    borderColor: 'rgba(150, 150, 150, 0.2)',
+    // borderColor: 'rgba(150, 150, 150, 0.2)',
   },
   categoryText: {
     fontSize: vw(13),
