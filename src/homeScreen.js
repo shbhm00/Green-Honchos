@@ -30,7 +30,7 @@ export default function HomeScreen() {
   const fetchData = async () => {
     try {
       const response = await fetch(
-        `https://ketchpim.greenhonchos.com/pim/pimresponse.php/?service=category&store=1&url_key=men-casual-shirts&page=${page}&count=16&sort_by=${sortBy.code}&sort_dir=${sortDirection}&filter=${filterCategory}`,
+        `https://ketchpim.greenhonchos.com/pim/pimresponse.php/?service=category&store=1&url_key=men-casual-shirts&page=${page}&count=16&sort_by=${sortBy.code}&sort_dir=${sortDirection}&filter=`,
       );
       const {result} = await response.json();
       console.log('result', result);
@@ -41,7 +41,7 @@ export default function HomeScreen() {
         {code: 'priceLTH', label: 'low to high'},
         {code: 'priceHTL', label: 'high to low'},
       ]);
-      setFilterData([...filterData, ...result.filters]);
+      setFilterData([...result.filters]);
     } catch (error) {
       console.log('error', error);
     }
@@ -81,6 +81,10 @@ export default function HomeScreen() {
         <Filter
           onClose={e => setIsVisible({...isVisible, filterVisible: e})}
           data={filterData}
+          // filteredData={e => {
+          //   setFilterCategory(e);
+          //   setData([]);
+          // }}
         />
       </ModalTester>
     );
@@ -91,7 +95,7 @@ export default function HomeScreen() {
         <Image source={{uri: item.image}} style={styles.renderedImage} />
         <View style={styles.infoBox}>
           <Text style={styles.brandName}>{item.brand}</Text>
-          <Text style={styles.name} ellipsizeMode="clip" numberOfLines={1}>
+          <Text style={styles.name} ellipsizeMode="tail" numberOfLines={1}>
             {item.name}
           </Text>
           <View style={styles.priceContainer}>
@@ -256,6 +260,7 @@ const styles = StyleSheet.create({
   },
   name: {
     // text
+    width: vw(190) - vw(10),
   },
   priceContainer: {
     flexDirection: 'row',

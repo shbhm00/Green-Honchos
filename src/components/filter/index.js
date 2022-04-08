@@ -7,13 +7,12 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {vh, vw, normalize} from '../../utils/dimension';
-import HorizontalLine from '../../utils/horizontalLine';
 import ToggleCheckBox from '../toggleCheckBox';
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
-export default function Filter({onClose, data}) {
+export default function Filter({onClose, data, filteredData}) {
   const [focusedData, setFocusedData] = useState({
     isFocused: false,
     data: [],
@@ -21,11 +20,16 @@ export default function Filter({onClose, data}) {
   });
   const [checked, setChecked] = useState({
     clicked: false,
-    selectedIndex: new Set(),
+    data: new Set(),
   });
-  console.log('checked', checked);
+
+  const clearAll = () => {
+    checked.data.clear();
+    selectedFilters.clear();
+  };
+
+  const [selectedFilters, setSelectedFilters] = useState(new Set());
   const leftSideContainer = () => {
-    console.log('dataaaa at categoryyy', focusedData.data);
     return (
       <View style={styles.leftContainer}>
         {data.map((item, index) => {
@@ -46,11 +50,12 @@ export default function Filter({onClose, data}) {
                       : 'rgba(150, 150, 150, 0.2)',
                 },
               ]}
+              key={index}
               onPress={() =>
                 setFocusedData({
                   ...focusedData,
                   isFocused: true,
-                  data: [...item.options],
+                  data: item.options,
                   FocusedIndex: index,
                 })
               }>
@@ -61,45 +66,68 @@ export default function Filter({onClose, data}) {
       </View>
     );
   };
-  const toggleOnPress = (_, index) => {
-    setChecked({
-      ...checked,
-      clicked: checked.selectedIndex.has(index)
-        ? checked.selectedIndex.delete(index) && false
-        : checked.selectedIndex.add(index) && true,
-    });
+  const toggleOnPress = (item, index) => {
+    if (checked.data.has(item)) {
+      checked.data.delete(item);
+      selectedFilters.delete(`${item.code}~${item.value.split(' ').join('+')}`);
+      filteredData(selectedFilters.size > 0 ? selectedFilters.join('|') : null);
+      setChecked({...checked, clicked: false});
+    } else {
+      checked.data.add(item);
+      selectedFilters.add(`${item.code}~${item.value.split(' ').join('+')}`);
+      setChecked({...checked, clicked: true});
+    }
+
+    // selectedFilters.add(`${item.code}~${item.value.split(' ').join('+')}`);
+    // console.log('checked', checked);
   };
+  console.log('checked', checked);
+  console.log('selectedFilters', selectedFilters);
   const rightSideContainer = () => {
     return (
       <View styles={styles.rightContainer}>
         {focusedData.isFocused ? (
           <ScrollView showsVerticalScrollIndicator={false}>
-            {focusedData.data.map((item, index) => {
-              return (
-                <View style={styles.subcategoryValue}>
-                  <ToggleCheckBox
-                    onPress={() => toggleOnPress(item, index)}
-                    checked={checked.selectedIndex.has(index)}
-                  />
-                  {item.color_code ? (
-                    <View
-                      style={{
-                        height: vh(20),
-                        width: vw(20),
-                        backgroundColor: item.color_code
-                          ? `${item.color_code}`
-                          : 'white',
-                        borderRadius: vw(10),
-                        borderWidth: 0.5,
-                        borderColor: 'grey',
-                      }}></View>
-                  ) : (
-                    <></>
-                  )}
-                  <Text style={styles.valueStyle}>{item.value}</Text>
-                </View>
-              );
-            })}
+            {Array.isArray(focusedData.data)
+              ? focusedData.data.map((item, index) => {
+                  return (
+                    <View style={styles.subcategoryValue} key={index}>
+                      <ToggleCheckBox
+                        onPress={() => toggleOnPress(item, index)}
+                        checked={
+                          checked.data.has(item)
+                          //   &&
+                          //   checked.selectedIndex.has(index)
+                        }
+                      />
+                      {item.color_code ? (
+                        <View
+                          style={[
+                            styles.colorCode,
+                            {
+                              backgroundColor: item.color_code
+                                ? `${item.color_code}`
+                                : 'white',
+                            },
+                          ]}></View>
+                      ) : (
+                        <></>
+                      )}
+                      <Text style={styles.valueStyle}>{item.value}</Text>
+                    </View>
+                  );
+                })
+              : Object.values(focusedData.data).map((item, index) => {
+                  return (
+                    <View style={styles.subcategoryValue} key={index}>
+                      <ToggleCheckBox
+                        onPress={() => toggleOnPress(item, index)}
+                        checked={checked.data.has(item)}
+                      />
+                      <Text style={styles.valueStyle}>{item.value}</Text>
+                    </View>
+                  );
+                })}
           </ScrollView>
         ) : null}
       </View>
@@ -109,8 +137,17 @@ export default function Filter({onClose, data}) {
     <View style={styles.modalContainer}>
       <SafeAreaView>
         <View>
-          <Text style={styles.heading}>Filter</Text>
-          <HorizontalLine />
+          <View style={styles.headerContainer}>
+            <Text style={styles.heading}>Filter</Text>
+            {checked.data.size > 0 ? (
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => clearAll()}>
+                <Text>Clear All</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          {/* <HorizontalLine /> */}
           <View style={styles.footerButton}>
             <TouchableOpacity
               style={styles.button}
@@ -145,10 +182,25 @@ const styles = StyleSheet.create({
     height: screenHeight,
     width: '100%',
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: vh(10),
+    borderBottomWidth: 1,
+    borderBottomColor: '#f8f9fa',
+  },
+  clearButton: {
+    padding: vh(5),
+    borderWidth: 1,
+    marginRight: vw(20),
+    borderRadius: vw(8),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   heading: {
     fontSize: vw(25),
     marginLeft: vw(20),
-    marginBottom: vh(15),
     textTransform: 'uppercase',
   },
   footerButton: {
@@ -203,5 +255,12 @@ const styles = StyleSheet.create({
   },
   valueStyle: {
     marginLeft: vw(10),
+  },
+  colorCode: {
+    height: vh(20),
+    width: vw(20),
+    borderRadius: vw(10),
+    borderWidth: 0.5,
+    borderColor: 'grey',
   },
 });
