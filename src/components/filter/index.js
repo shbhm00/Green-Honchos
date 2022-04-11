@@ -26,8 +26,12 @@ export default function Filter({onClose, data, filteredData}) {
   const clearAll = () => {
     checked.data.clear();
     selectedFilters.clear();
+    console.log('clear');
+    console.log('selectedFilters', selectedFilters);
   };
-
+  //   useEffect(() => {
+  //     clearAll();
+  //   }, [selectedFilters]);
   const [selectedFilters, setSelectedFilters] = useState(new Set());
   const leftSideContainer = () => {
     return (
@@ -67,14 +71,21 @@ export default function Filter({onClose, data, filteredData}) {
     );
   };
   const toggleOnPress = (item, index) => {
+    console.log('toggle', checked.data.has(item));
     if (checked.data.has(item)) {
+      //   console.log('checked.data.has(item)', checked.data.has(item));
       checked.data.delete(item);
       selectedFilters.delete(`${item.code}~${item.value.split(' ').join('+')}`);
-      filteredData(selectedFilters.size > 0 ? selectedFilters.join('|') : null);
+      filteredData(
+        selectedFilters.size > 0 ? [...selectedFilters].join('|') : null,
+      );
       setChecked({...checked, clicked: false});
     } else {
       checked.data.add(item);
       selectedFilters.add(`${item.code}~${item.value.split(' ').join('+')}`);
+      filteredData(
+        selectedFilters.size > 0 ? [...selectedFilters].join('|') : null,
+      );
       setChecked({...checked, clicked: true});
     }
 
@@ -92,14 +103,23 @@ export default function Filter({onClose, data, filteredData}) {
               ? focusedData.data.map((item, index) => {
                   return (
                     <View style={styles.subcategoryValue} key={index}>
-                      <ToggleCheckBox
+                      {[...checked.data].some(
+                        fl => fl.value_key === item.value_key,
+                      ) ? (
+                        <ToggleCheckBox
+                          onPress={() => toggleOnPress(item, index)}
+                          checked={true}
+                        />
+                      ) : (
+                        <ToggleCheckBox
+                          onPress={() => toggleOnPress(item, index)}
+                          checked={false}
+                        />
+                      )}
+                      {/* <ToggleCheckBox
                         onPress={() => toggleOnPress(item, index)}
-                        checked={
-                          checked.data.has(item)
-                          //   &&
-                          //   checked.selectedIndex.has(index)
-                        }
-                      />
+                        checked={checked.data.has(item)}
+                      /> */}
                       {item.color_code ? (
                         <View
                           style={[
@@ -109,7 +129,8 @@ export default function Filter({onClose, data, filteredData}) {
                                 ? `${item.color_code}`
                                 : 'white',
                             },
-                          ]}></View>
+                          ]}
+                        />
                       ) : (
                         <></>
                       )}
@@ -120,10 +141,23 @@ export default function Filter({onClose, data, filteredData}) {
               : Object.values(focusedData.data).map((item, index) => {
                   return (
                     <View style={styles.subcategoryValue} key={index}>
-                      <ToggleCheckBox
+                      {[...checked.data].some(
+                        fl => fl.value_key === item.value_key,
+                      ) ? (
+                        <ToggleCheckBox
+                          onPress={() => toggleOnPress(item, index)}
+                          checked={true}
+                        />
+                      ) : (
+                        <ToggleCheckBox
+                          onPress={() => toggleOnPress(item, index)}
+                          checked={false}
+                        />
+                      )}
+                      {/*   <ToggleCheckBox
                         onPress={() => toggleOnPress(item, index)}
                         checked={checked.data.has(item)}
-                      />
+                      /> */}
                       <Text style={styles.valueStyle}>{item.value}</Text>
                     </View>
                   );

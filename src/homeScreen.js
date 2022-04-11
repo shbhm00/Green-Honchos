@@ -26,29 +26,38 @@ export default function HomeScreen() {
   const [filterData, setFilterData] = useState([]);
   const [sortDirection, setSortDirection] = useState('desc');
   const [filterCategory, setFilterCategory] = useState('');
+  const [isLoading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
       const response = await fetch(
-        `https://ketchpim.greenhonchos.com/pim/pimresponse.php/?service=category&store=1&url_key=men-casual-shirts&page=${page}&count=16&sort_by=${sortBy.code}&sort_dir=${sortDirection}&filter=`,
+        `https://getketchpim.getketch.com/pim/pimresponse.php/?service=category&store=1&url_key=men-casual-shirts&page=${page}&count=16&sort_by=${
+          sortBy.code || ''
+        }&sort_dir=${sortDirection || ''}&filter=${filterCategory || ''}`,
       );
-      const {result} = await response.json();
-      console.log('result', result);
-      setData([...data, ...result.products]);
-      let sort = result.sort.filter(item => item.code !== 'price');
-      setSortData([
-        ...sort,
-        {code: 'priceLTH', label: 'low to high'},
-        {code: 'priceHTL', label: 'high to low'},
-      ]);
-      setFilterData([...result.filters]);
+      console.log('response', response);
+      if (response.status === 200) {
+        let dataa = await response.json();
+        console.log('dataa', dataa);
+        setData([...data, ...dataa.result.products]);
+        let sort = dataa.result.sort.filter(item => item.code !== 'price');
+        setSortData([
+          ...sort,
+          {code: 'priceLTH', label: 'low to high'},
+          {code: 'priceHTL', label: 'high to low'},
+        ]);
+        setFilterData(
+          dataa.result.filters.length > 0 ? dataa.result.filters : filterData,
+        );
+        setLoading(false);
+      }
     } catch (error) {
       console.log('error', error);
     }
   };
   useEffect(() => {
     fetchData();
-  }, [page, sortBy]);
+  }, [page, sortBy, filterCategory]);
 
   useEffect(() => {
     console.log('data', data);
@@ -81,10 +90,11 @@ export default function HomeScreen() {
         <Filter
           onClose={e => setIsVisible({...isVisible, filterVisible: e})}
           data={filterData}
-          // filteredData={e => {
-          //   setFilterCategory(e);
-          //   setData([]);
-          // }}
+          filteredData={e => {
+            console.log('eeeeeee', e);
+            setFilterCategory(e);
+            setData([]);
+          }}
         />
       </ModalTester>
     );
@@ -170,6 +180,20 @@ export default function HomeScreen() {
           }}
           scrollEventThrottle={400}
           decelerationRate="fast"
+          ListFooterComponent={() => {
+            if (isLoading) return null;
+            return (
+              <View
+                style={{
+                  padding: vh(50),
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingBottom: vh(30),
+                }}>
+                <ActivityIndicator size="large" />
+              </View>
+            );
+          }}
         />
       )}
       <View style={styles.footerButton}>
