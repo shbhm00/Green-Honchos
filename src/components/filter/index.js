@@ -7,32 +7,37 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {vh, vw, normalize} from '../../utils/dimension';
 import ToggleCheckBox from '../toggleCheckBox';
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
-export default function Filter({onClose, data, filteredData}) {
-  const [focusedData, setFocusedData] = useState({
-    isFocused: false,
-    data: [],
-    FocusedIndex: null,
-  });
-  const [checked, setChecked] = useState({
-    clicked: false,
-    data: new Set(),
-  });
 
-  const clearAll = () => {
-    checked.data.clear();
-    selectedFilters.clear();
-    console.log('clear');
-    console.log('selectedFilters', selectedFilters);
-  };
-  //   useEffect(() => {
-  //     clearAll();
-  //   }, [selectedFilters]);
+export function Filter({onClose, data, filteredData, selectedData, filter}) {
+  const [focusedData, setFocusedData] = useState({
+    isFocused: true,
+    data: Object.values(data[0].options),
+    FocusedIndex: 0,
+  });
+  const [checked, setChecked] = useState(filter);
   const [selectedFilters, setSelectedFilters] = useState(new Set());
+
+  console.log('filter', filter);
+  const clearAll = () => {
+    setChecked([]);
+    filteredData(selectedFilters.clear());
+    selectedData([]);
+    // filter.clear();
+  };
+
+  useEffect(() => {
+    console.log('filterComponent called');
+    if (filter.size > 0) {
+      console.log('filterComponent called');
+      checked.push(...filter);
+    }
+  }, []);
+  console.log('checked', checked);
   const leftSideContainer = () => {
     return (
       <View style={styles.leftContainer}>
@@ -55,14 +60,14 @@ export default function Filter({onClose, data, filteredData}) {
                 },
               ]}
               key={index}
-              onPress={() =>
+              onPress={() => {
+                console.log('index', index);
                 setFocusedData({
-                  ...focusedData,
                   isFocused: true,
                   data: item.options,
                   FocusedIndex: index,
-                })
-              }>
+                });
+              }}>
               <Text style={styles.categoryText}>{item.filter_lable}</Text>
             </TouchableOpacity>
           );
@@ -71,29 +76,26 @@ export default function Filter({onClose, data, filteredData}) {
     );
   };
   const toggleOnPress = (item, index) => {
-    console.log('toggle', checked.data.has(item));
-    if (checked.data.has(item)) {
-      //   console.log('checked.data.has(item)', checked.data.has(item));
-      checked.data.delete(item);
-      selectedFilters.delete(`${item.code}~${item.value.split(' ').join('+')}`);
+    console.log('item at filter', item);
+    if (checked.includes(item.value_key)) {
+      checked.splice(checked.indexOf(item.value_key), 1);
+      selectedFilters.delete(`${item.code}~${item.value_key}`);
       filteredData(
         selectedFilters.size > 0 ? [...selectedFilters].join('|') : null,
       );
-      setChecked({...checked, clicked: false});
+      selectedData(checked);
+      console.log('checked Data delete', checked);
     } else {
-      checked.data.add(item);
-      selectedFilters.add(`${item.code}~${item.value.split(' ').join('+')}`);
+      checked.push(item.value_key);
+      selectedFilters.add(`${item.code}~${item.value_key}`);
       filteredData(
         selectedFilters.size > 0 ? [...selectedFilters].join('|') : null,
       );
-      setChecked({...checked, clicked: true});
+      selectedData(checked);
+      console.log('checked Data added', checked);
     }
-
-    // selectedFilters.add(`${item.code}~${item.value.split(' ').join('+')}`);
-    // console.log('checked', checked);
   };
-  console.log('checked', checked);
-  console.log('selectedFilters', selectedFilters);
+
   const rightSideContainer = () => {
     return (
       <View styles={styles.rightContainer}>
@@ -103,22 +105,31 @@ export default function Filter({onClose, data, filteredData}) {
               ? focusedData.data.map((item, index) => {
                   return (
                     <View style={styles.subcategoryValue} key={index}>
-                      {[...checked.data].some(
-                        fl => fl.value_key === item.value_key,
-                      ) ? (
+                      {filter.some(el => el === item.value_key) ? (
                         <ToggleCheckBox
-                          onPress={() => toggleOnPress(item, index)}
+                          onPress={() => {
+                            console.log('toggled true');
+                            toggleOnPress(item, index);
+                          }}
                           checked={true}
                         />
                       ) : (
                         <ToggleCheckBox
-                          onPress={() => toggleOnPress(item, index)}
+                          onPress={() => {
+                            toggleOnPress(item, index);
+                          }}
                           checked={false}
                         />
                       )}
                       {/* <ToggleCheckBox
                         onPress={() => toggleOnPress(item, index)}
-                        checked={checked.data.has(item)}
+                        // checked={
+                        //   [...checked].some(
+                        //     el => el.value_key === item.value_key,
+                        //   )
+                        //     ? true
+                        //     : false
+                        // }
                       /> */}
                       {item.color_code ? (
                         <View
@@ -141,22 +152,32 @@ export default function Filter({onClose, data, filteredData}) {
               : Object.values(focusedData.data).map((item, index) => {
                   return (
                     <View style={styles.subcategoryValue} key={index}>
-                      {[...checked.data].some(
-                        fl => fl.value_key === item.value_key,
-                      ) ? (
+                      {filter.some(el => el === item.value_key) ? (
                         <ToggleCheckBox
-                          onPress={() => toggleOnPress(item, index)}
+                          onPress={() => {
+                            console.log('toggled true');
+                            toggleOnPress(item, index);
+                          }}
                           checked={true}
                         />
                       ) : (
                         <ToggleCheckBox
-                          onPress={() => toggleOnPress(item, index)}
+                          onPress={() => {
+                            console.log('toggled false');
+                            toggleOnPress(item, index);
+                          }}
                           checked={false}
                         />
                       )}
-                      {/*   <ToggleCheckBox
+                      {/* <ToggleCheckBox
                         onPress={() => toggleOnPress(item, index)}
-                        checked={checked.data.has(item)}
+                        checked={
+                          [...checked].some(
+                            el => el.value_key === item.value_key,
+                          )
+                            ? true
+                            : false
+                        }
                       /> */}
                       <Text style={styles.valueStyle}>{item.value}</Text>
                     </View>
@@ -170,36 +191,38 @@ export default function Filter({onClose, data, filteredData}) {
   return (
     <View style={styles.modalContainer}>
       <SafeAreaView>
-        <View>
-          <View style={styles.headerContainer}>
-            <Text style={styles.heading}>Filter</Text>
-            {checked.data.size > 0 ? (
-              <TouchableOpacity
-                style={styles.clearButton}
-                onPress={() => clearAll()}>
-                <Text>Clear All</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-          {/* <HorizontalLine /> */}
-          <View style={styles.footerButton}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.heading}>Filter</Text>
+          {checked.length > 0 ? (
             <TouchableOpacity
-              style={styles.button}
-              onPress={() => onClose(false)}>
-              <Text style={styles.footerButtonText}>close</Text>
+              style={styles.clearButton}
+              onPress={() => clearAll()}>
+              <Text>Clear All</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button}>
-              <Text style={[styles.footerButtonText, {color: 'red'}]}>
-                apply
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.filterBoxes}>
-            {leftSideContainer()}
-            {rightSideContainer()}
-          </View>
+          ) : null}
         </View>
       </SafeAreaView>
+      {/* <HorizontalLine /> */}
+      <View style={styles.filterBoxes}>
+        {leftSideContainer()}
+        {rightSideContainer()}
+      </View>
+      <View style={styles.footerButton}>
+        <View style={styles.footerButtonContainer}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              onClose(false);
+            }}>
+            <Text style={styles.footerButtonText}>close</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => onClose(false)}>
+            <Text style={[styles.footerButtonText, {color: 'red'}]}>apply</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
@@ -238,14 +261,18 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   footerButton: {
-    // backgroundColor: 'red',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    height: vw(55),
     backgroundColor: 'white',
     position: 'absolute',
-    top: screenHeight - vh(100),
+    justifyContent: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#e6e6e6',
     zIndex: 1,
-    height: vh(60),
+    bottom: 0,
+  },
+  footerButtonContainer: {
+    flexDirection: 'row',
+    width: screenWidth,
   },
   button: {
     borderWidth: 1,
@@ -298,3 +325,4 @@ const styles = StyleSheet.create({
     borderColor: 'grey',
   },
 });
+export const MemoFilter = React.memo(Filter);

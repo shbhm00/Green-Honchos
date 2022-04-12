@@ -5,3 +5,6 @@
 
 export const checkedIcon = require('./checked.png');
 export const uncheckedIcon = require('./unchecked.png');
+export const leftArrow = require('./leftArrow.png');
+export const rightArrow = require('./rightArrow.png');
+export const back = require('./back.png');

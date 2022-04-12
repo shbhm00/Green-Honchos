@@ -1,0 +1,478 @@
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  ActivityIndicator,
+  SafeAreaView,
+  Modal,
+  Statusbar,
+} from 'react-native';
+import React, {useEffect, useState, useMemo} from 'react';
+import ModalTester from '../components/modal';
+import {vh, vw, normalize} from '../utils/dimension';
+import PlpList from '../components/plpList';
+import SimilarData, {
+  MemoSimilarData,
+} from '../components/plpList/similarProducts';
+import {MemoFilter} from '../components/filter';
+const screenHeight = Dimensions.get('window').height;
+const screenWidth = Dimensions.get('window').width;
+export default function PlpScreen({navigation}) {
+  const [data, setData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [sortData, setSortData] = useState([]);
+  const [sortBy, setSortBy] = useState({code: '', index: ''});
+  const [isVisible, setIsVisible] = useState({
+    sortVisible: false,
+    filterVisible: false,
+    similarVisible: false,
+  });
+  const [filterData, setFilterData] = useState([]);
+  const [sortDirection, setSortDirection] = useState('desc');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [isLoading, setLoading] = useState(true);
+  const [selectedFilterData, setSelectedFilterData] = useState([]);
+  const [similarProductsList, setSimilarProductsList] = useState([]);
+  const [urlKey, setUrlKey] = useState('');
+
+  const fetchData = async () => {
+    try {
+      const BASE_URL = `https://getketchpim.getketch.com/pim/pimresponse.php/?service=category&store=1`;
+      const response = await fetch(
+        `${BASE_URL}&url_key=men-casual-shirts&page=${page}&count=16&sort_by=${
+          sortBy.code || ''
+        }&sort_dir=${sortDirection || ''}&filter=${filterCategory || ''}`,
+      );
+      console.log('response', response);
+      if (response.status === 200) {
+        let dataa = await response.json();
+        console.log('dataa', dataa);
+        setData([...data, ...dataa.result.products]);
+        let sort = dataa.result.sort.filter(item => item.code !== 'price');
+        setSortData([
+          ...sort,
+          {code: 'priceLTH', label: 'low to high'},
+          {code: 'priceHTL', label: 'high to low'},
+        ]);
+        setFilterData(
+          dataa.result.filters.length > 0 ? dataa.result.filters : filterData,
+        );
+        setLoading(false);
+      }
+    } catch (error) {
+      console.log('error', error);
+    }
+  };
+  const fetchSimilarData = async () => {
+    try {
+      const BASE_URL = `https://getketchpim.getketch.com/pim/pimresponse.php/?service=product&store=1`;
+      const response = await fetch(
+        `${BASE_URL}&url_key=${urlKey}&is_list=true`,
+      );
+      if (response.status === 200) {
+        let dataa = await response.json();
+        setSimilarProductsList(dataa.result.similar_product_list);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.log('error', error);
+    }
+  };
+  useEffect(() => {
+    fetchData();
+  }, [page, sortBy, sortDirection, filterCategory]);
+  useEffect(() => {
+    fetchSimilarData();
+  }, [urlKey]);
+
+  const shortButtonPress = (item, index) => {
+    if (sortBy.index === index) {
+      setIsVisible(false);
+      return;
+    } else {
+      setSortBy({
+        code:
+          item.code === 'priceLTH' || item.code === 'priceHTL'
+            ? 'selling_price'
+            : item.code,
+        index: index,
+      });
+      setSortDirection(item.code === 'priceLTH' ? 'asc' : 'desc');
+      setData([]);
+      setIsVisible({...isVisible, sortVisible: false});
+    }
+  };
+  const filter = () => {
+    return (
+      <ModalTester
+        isVisible={isVisible.filterVisible}
+        animationInType="slideInUp"
+        animationOutType="slideOutDown"
+        onClose={e => setIsVisible(e)}>
+        <MemoFilter
+          onClose={e => setIsVisible({...isVisible, filterVisible: e})}
+          data={filterData}
+          filteredData={e => {
+            console.log('eeeeeee', e);
+            setFilterCategory(e);
+            setData([]);
+          }}
+          selectedData={item => setSelectedFilterData(item)}
+          filter={selectedFilterData}
+        />
+      </ModalTester>
+    );
+  };
+  const SimilarProductHeader = () => {
+    console.log('modalHeadreCalled');
+    return (
+      <SafeAreaView
+        style={{
+          borderBottomWidth: 1,
+          borderBottomColor: '#e6e6e6',
+        }}>
+        <View style={styles.similarHeadingContainer}>
+          <Text style={styles.similarHeading}>Similar Products</Text>
+          <TouchableOpacity
+            onPress={() => {
+              setIsVisible({...isVisible, similarVisible: false});
+            }}>
+            <Image
+              source={{
+                uri: 'https://getketch.com/images/close-icon.png',
+              }}
+              style={styles.crossImage}
+            />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+      //   </View>
+    );
+  };
+
+  const renderSimilarProducts = item => {
+    return (
+      <ModalTester
+        isVisible={isVisible.similarVisible}
+        backdropOpacity={0.3}
+        animationInType="slideInRight"
+        animationOutType="slideOutLeft"
+        onClose={e => setIsVisible(e)}>
+        <FlatList
+          data={similarProductsList}
+          style={styles.modalContainerSimilar}
+          ListHeaderComponent={() => {
+            return <SimilarProductHeader />;
+          }}
+          progressViewOffset={100}
+          columnWrapperStyle={styles.columnWrapper}
+          numColumns={2}
+          // getItemLayout={(data, index) => ({
+          //   length: 190,
+          //   offset: 190 * index,
+          //   index,
+          // })}
+          renderItem={useMemo(
+            () => item =>
+              (
+                <SimilarData
+                  item={item.item}
+                  onItemPress={() =>
+                    navigation.navigate('PDP', {item: item.item})
+                  }
+                />
+              ),
+            [similarProductsList],
+          )}
+          keyExtractor={(_, index) => index.toString()}
+          scrollEventThrottle={400}
+          decelerationRate="fast"
+        />
+      </ModalTester>
+    );
+  };
+  const renderItem = useMemo(() => ({item}) => {
+    return (
+      <PlpList
+        item={item}
+        isSimilarProduct={true}
+        similarButtonPress={() => {
+          setIsVisible({...isVisible, similarVisible: true});
+          setUrlKey(item.url_key);
+        }}
+        onItemPress={() =>
+          setTimeout(() => {
+            navigation.navigate('PDP', {item});
+          }, 100)
+        }
+      />
+    );
+  });
+
+  const shortby = () => {
+    return (
+      <ModalTester
+        isVisible={isVisible.sortVisible}
+        animationInType="slideInUp"
+        animationOutType="slideOutDown"
+        onClose={e => setIsVisible(e)}>
+        <View style={styles.modalContainer}>
+          <Text style={styles.sortHeading}>SORT BY</Text>
+          <View style={styles.horizontalLine} />
+          {sortData.map((item, index) => {
+            return (
+              <TouchableOpacity
+                onPress={() => shortButtonPress(item, index)}
+                style={[
+                  styles.sortItem,
+                  {backgroundColor: sortBy.index === index ? 'grey' : ''},
+                ]}>
+                <Text style={styles.sortLabel}>
+                  {item.code === 'priceLTH' || item.code === 'priceHTL'
+                    ? `Price: ${item.label}`
+                    : item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ModalTester>
+    );
+  };
+  const ListHeaderComponent = () => {
+    return (
+      <View style={styles.listHeaderContainer}>
+        {/* <Image
+            source={{
+              uri: '	https://ketchssr.greenhonchos.com/_nuxt/img/back-arrow.8055629.png',
+            }}
+            style={styles.leftArrow}
+          /> */}
+        <Text style={styles.heading}>KETCH</Text>
+      </View>
+    );
+  };
+  return (
+    // <SafeAreaView
+    //   style={{
+    //     flex: 1,
+    //     backgroundColor: '#fff',
+    //     backfaceVisibility: 'visible',
+    //     borderBottomWidth: isVisible.similarVisible ? 1 : 0,
+    //     borderBottomColor: isVisible.similarVisible ? '#e6e6e6' : '',
+    //   }}>
+    <View style={styles.container}>
+      {/* <SafeAreaView> */}
+      <SafeAreaView>
+        <ListHeaderComponent />
+      </SafeAreaView>
+      {data.length == 0 ? (
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" />
+        </View>
+      ) : (
+        <FlatList
+          data={data}
+          columnWrapperStyle={styles.columnWrapper}
+          numColumns={2}
+          renderItem={renderItem}
+          keyExtractor={(_, index) => index.toString()}
+          onEndReachedThreshold={0.5}
+          onEndReached={() => {
+            console.log('onEndReached');
+            setPage(page + 1);
+          }}
+          scrollEventThrottle={400}
+          decelerationRate="fast"
+          // onMomentumScrollBegin={()=>}
+          getItemLayout={(data, index) => ({
+            length: 240,
+            offset: 240 * index,
+            index,
+          })}
+          ListFooterComponent={() => {
+            if (isLoading) return null;
+            return (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator size="large" />
+              </View>
+            );
+          }}
+        />
+      )}
+      <View style={styles.footerButton}>
+        <View style={styles.footerButtonContainer}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() =>
+              setIsVisible({
+                ...isVisible,
+                sortVisible: !isVisible.sortVisible,
+              })
+            }>
+            <Text style={styles.footerButtonText}>SORT BY</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() =>
+              setIsVisible({
+                ...isVisible,
+                filterVisible: true,
+              })
+            }>
+            <Text Text style={styles.footerButtonText}>
+              FILTER
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      {/* </SafeAreaView> */}
+      {shortby()}
+      {filter()}
+      {renderSimilarProducts()}
+    </View>
+  );
+}
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  heading: {
+    fontSize: vw(25),
+    marginLeft: vw(20),
+    marginBottom: vh(10),
+  },
+  renderedContainer: {
+    borderWidth: 1,
+    borderColor: '#f8f9fa',
+    marginBottom: vh(5),
+  },
+  footerButton: {
+    // backgroundColor: 'red',
+    // flexDirection: 'row',
+    // justifyContent: 'space-around',
+    // // backgroundColor: 'white',
+    // position: 'absolute',
+    // bottom: -vw(40),
+    // zIndex: 1,
+    // height: vh(60),
+    height: vw(55),
+    backgroundColor: 'white',
+    position: 'absolute',
+    justifyContent: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#e6e6e6',
+    zIndex: 1,
+    bottom: 0,
+    shadowRadius: 2,
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowColor: '#000000',
+    elevation: 4,
+    shadowOpacity: 0.1,
+  },
+  footerButtonContainer: {
+    flexDirection: 'row',
+    width: screenWidth,
+  },
+  button: {
+    borderWidth: 1,
+    borderColor: '#f8f9fa',
+    width: screenWidth / 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: normalize(10),
+  },
+  footerButtonText: {
+    fontSize: vw(17),
+    fontWeight: '500',
+  },
+  listHeaderContainer: {
+    // paddingTop: vh(2),
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f8f9fa',
+  },
+  columnWrapper: {
+    flex: 1,
+    justifyContent: 'space-around',
+  },
+
+  modalContainer: {
+    flex: 0.5,
+    backgroundColor: 'white',
+    bottom: 0,
+    position: 'absolute',
+    height: screenHeight / 2 + vh(20),
+    width: '100%',
+  },
+  horizontalLine: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#D9D9D9',
+    width: '100%',
+  },
+  sortHeading: {
+    textAlign: 'center',
+    fontSize: vw(22),
+    fontWeight: '500',
+    marginVertical: vh(15),
+  },
+  sortLabel: {
+    fontSize: vw(17),
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  sortItem: {
+    padding: normalize(20),
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#D9D9D9',
+  },
+  footerLoader: {
+    padding: vh(50),
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: vh(30),
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainerSimilar: {
+    flex: 1,
+    backgroundColor: 'white',
+    bottom: 0,
+    right: 0,
+    position: 'absolute',
+    height: screenHeight - vh(50),
+    width: '88%',
+    borderRadius: vw(5),
+  },
+  similarHeadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: vh(40),
+    // justifyContent: 'center',
+  },
+  similarHeading: {
+    fontSize: vw(20),
+    textTransform: 'uppercase',
+    fontWeight: '500',
+    marginLeft: vw(70),
+  },
+  crossImage: {
+    height: vh(20),
+    width: vw(20),
+    marginLeft: vw(40),
+  },
+});
