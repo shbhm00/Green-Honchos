@@ -16,6 +16,7 @@ import PlpList from '../components/plpList';
 import SimilarData from '../components/plpList/similarProducts';
 import {MemoFilter} from '../components/filter';
 import Header from '../components/header';
+import {useDispatch, useSelector} from 'react-redux';
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 export default function PlpScreen({navigation}) {
@@ -35,7 +36,8 @@ export default function PlpScreen({navigation}) {
   const [selectedFilterData, setSelectedFilterData] = useState([]);
   const [similarProductsList, setSimilarProductsList] = useState([]);
   const [urlKey, setUrlKey] = useState('');
-
+  const selector = useSelector(state => state.Reducer.data);
+  console.log('selector at plp', selector);
   const fetchData = async () => {
     try {
       const BASE_URL = `https://getketchpim.getketch.com/pim/pimresponse.php/?service=category&store=1`;
@@ -251,7 +253,11 @@ export default function PlpScreen({navigation}) {
   };
   return (
     <View style={styles.container}>
-      <Header onPress={() => alert('Sorry')} />
+      <Header
+        onPress={() => alert('Sorry')}
+        cartButtonPress={() => navigation.navigate('Cart')}
+        floatingText={selector.length > 0 ? selector.products.length : 0}
+      />
       {data.length == 0 ? (
         <View style={styles.loader}>
           <ActivityIndicator size="large" />
@@ -262,6 +268,7 @@ export default function PlpScreen({navigation}) {
           columnWrapperStyle={styles.columnWrapper}
           numColumns={2}
           renderItem={renderItem}
+          initialNumToRender={16}
           keyExtractor={(_, index) => index.toString()}
           onEndReachedThreshold={0.5}
           onEndReached={() => {

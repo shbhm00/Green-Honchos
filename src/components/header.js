@@ -9,19 +9,20 @@ import {
 } from 'react-native';
 import React from 'react';
 import {cart, back} from '../assests';
-import {vh, vw, normalize} from '../utils/dimension';
+import {vh, vw} from '../utils/dimension';
 const screenWidth = Dimensions.get('window').width;
-export default function Header({navigation, onPress}) {
+export default function Header({onPress, cartButtonPress, floatingText}) {
+  console.log('floatingText', floatingText);
   return (
     <SafeAreaView style={styles.headingContainer}>
       <TouchableOpacity onPress={onPress}>
         <Image source={back} style={styles.backIcon} />
       </TouchableOpacity>
       <Text style={styles.heading}>Ketch</Text>
-      <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
+      <TouchableOpacity onPress={cartButtonPress}>
         <Image source={cart} style={styles.cartIcon} />
         <View style={styles.floatingCount}>
-          <Text style={styles.floatingText}>1</Text>
+          <Text style={styles.floatingText}>{floatingText}</Text>
         </View>
       </TouchableOpacity>
     </SafeAreaView>
@@ -62,5 +63,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     right: -8,
     top: -10,
+  },
+  floatingText: {
+    color: 'white',
+    fontSize: vw(10),
   },
 });

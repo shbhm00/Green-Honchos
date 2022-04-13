@@ -15,7 +15,7 @@ import React, {useEffect, useRef} from 'react';
 import {vh, vw, normalize} from '../utils/dimension';
 import {leftArrow, rightArrow, back, cart} from '../assests';
 import {useSelector, useDispatch} from 'react-redux';
-import {addToCart} from '../actions/actions';
+import {addToCart, cartSession} from '../actions/actions';
 import Header from '../components/header';
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
@@ -24,8 +24,8 @@ export default function PdpScreen({route, navigation}) {
   console.log('route', route.params.item);
   let sliderLength = route.params.item.gallery.length;
   const dispatch = useDispatch();
-  const selecter = useSelector(state => state);
-  let sizeofCart = selecter.Reducer.data.length;
+  const selector = useSelector(state => state);
+  // let sizeofCart = selecter.Reducer.data.length;
   const flatlistRef = useRef();
   const scrollX = React.useRef(new Animated.Value(0)).current;
   const [activeIndex, setActiveIndex] = React.useState(0);
@@ -34,7 +34,6 @@ export default function PdpScreen({route, navigation}) {
 
   const {
     id_product,
-    product_options,
     name,
     group_id,
     sku,
@@ -44,12 +43,31 @@ export default function PdpScreen({route, navigation}) {
     selling_price,
     store,
   } = route.params.item;
+
+  const form = {
+    product_id: id_product,
+    product_parent_id: id_product,
+    product_options: productOptions || 'S',
+    name: name,
+    group_id: group_id,
+    sku: sku,
+    master_sku: master_sku,
+    price: price,
+    qty_ordered: qty_ordered || 1,
+    final_price: selling_price,
+    store: store,
+    ...(selector.CartReducer.cart_id && {
+      cart_id: selector.CartReducer.cart_id,
+    }),
+    ...(selector.CartReducer.cart_session && {
+      cart_session: selector.CartReducer.cart_session,
+    }),
+  };
   const [size, setSize] = React.useState(
     Object.values(route.params.item.variation),
   );
-  console.log('size', size);
-  const renderItem = ({item, floatingNumber}) => {
-    // let {height, width} = Image.getSize(item.image || '', screenWidth);
+  console.log('selecter', selector.CartReducer.cart_id);
+  const renderItem = ({item, index}) => {
     return (
       <Image
         source={{uri: item.image}}
@@ -71,39 +89,45 @@ export default function PdpScreen({route, navigation}) {
   };
 
   const addToCartPressed = async () => {
-    try {
-      const response = await fetch(
-        'https://ketchcart-pim.greenhonchos.com/api/v1/product/add-product',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+    if (productOptions) {
+      try {
+        const response = await fetch(
+          'https://ketchcart-pim.greenhonchos.com/api/v1/product/add-product',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(form),
           },
-          body: JSON.stringify({
-            product_id: id_product,
-            product_parent_id: id_product,
-            product_options: productOptions || 'S',
-            name: name,
-            group_id: group_id,
-            sku: sku,
-            master_sku: master_sku,
-            price: price,
-            qty_ordered: qty_ordered || 1,
-            final_price: selling_price,
-            store: store,
-          }),
-        },
-      );
-      const json = await response.json();
-      console.log('json', json);
-    } catch (error) {
-      console.log('error', error);
+        );
+        const {data} = await response.json();
+        console.log('data', data);
+        dispatch(addToCart(data));
+        {
+          selector.CartReducer.cart_id && selector.CartReducer.cart_session
+            ? null
+            : dispatch(cartSession(data));
+        }
+      } catch (error) {
+        console.log('error', error);
+      }
+    } else {
+      alert('Please select size');
     }
   };
 
   return (
     <View style={{flex: 1, backgroundColor: 'white'}}>
-      <Header onPress={() => navigation.goBack()} />
+      <Header
+        onPress={() => navigation.goBack()}
+        cartButtonPress={() => navigation.navigate('Cart')}
+        floatingText={
+          selector.Reducer.data.length > 0
+            ? selector.Reducer.data.products.length
+            : 0
+        }
+      />
       <ScrollView style={{flex: 1}}>
         <View style={styles.dotContainer}>
           {route.params.item.gallery.map((item, index) => {

@@ -9,7 +9,7 @@ export default function (state = initialState, action) {
     case ADD_TO_CART:
       return {
         ...state,
-        data: [...state.data, action.payload],
+        data: action.payload,
       };
     default:
       return state;
