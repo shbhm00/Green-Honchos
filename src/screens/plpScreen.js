@@ -8,17 +8,14 @@ import {
   Dimensions,
   ActivityIndicator,
   SafeAreaView,
-  Modal,
-  Statusbar,
 } from 'react-native';
 import React, {useEffect, useState, useMemo} from 'react';
 import ModalTester from '../components/modal';
 import {vh, vw, normalize} from '../utils/dimension';
 import PlpList from '../components/plpList';
-import SimilarData, {
-  MemoSimilarData,
-} from '../components/plpList/similarProducts';
+import SimilarData from '../components/plpList/similarProducts';
 import {MemoFilter} from '../components/filter';
+import Header from '../components/header';
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 export default function PlpScreen({navigation}) {
@@ -68,6 +65,7 @@ export default function PlpScreen({navigation}) {
     }
   };
   const fetchSimilarData = async () => {
+    console.log('urlKey', urlKey);
     try {
       const BASE_URL = `https://getketchpim.getketch.com/pim/pimresponse.php/?service=product&store=1`;
       const response = await fetch(
@@ -75,7 +73,7 @@ export default function PlpScreen({navigation}) {
       );
       if (response.status === 200) {
         let dataa = await response.json();
-        setSimilarProductsList(dataa.result.similar_product_list);
+        setSimilarProductsList(dataa?.result?.similar_product_list || []);
         setLoading(false);
       }
     } catch (error) {
@@ -140,6 +138,8 @@ export default function PlpScreen({navigation}) {
           <TouchableOpacity
             onPress={() => {
               setIsVisible({...isVisible, similarVisible: false});
+              setSimilarProductsList([]);
+              setUrlKey('');
             }}>
             <Image
               source={{
@@ -159,39 +159,45 @@ export default function PlpScreen({navigation}) {
       <ModalTester
         isVisible={isVisible.similarVisible}
         backdropOpacity={0.3}
+        animationInTime={800}
         animationInType="slideInRight"
-        animationOutType="slideOutLeft"
-        onClose={e => setIsVisible(e)}>
-        <FlatList
-          data={similarProductsList}
-          style={styles.modalContainerSimilar}
-          ListHeaderComponent={() => {
-            return <SimilarProductHeader />;
-          }}
-          progressViewOffset={100}
-          columnWrapperStyle={styles.columnWrapper}
-          numColumns={2}
-          // getItemLayout={(data, index) => ({
-          //   length: 190,
-          //   offset: 190 * index,
-          //   index,
-          // })}
-          renderItem={useMemo(
-            () => item =>
-              (
-                <SimilarData
-                  item={item.item}
-                  onItemPress={() =>
-                    navigation.navigate('PDP', {item: item.item})
-                  }
-                />
-              ),
-            [similarProductsList],
-          )}
-          keyExtractor={(_, index) => index.toString()}
-          scrollEventThrottle={400}
-          decelerationRate="fast"
-        />
+        animationOutType="slideOutRight"
+        onClose={e => {
+          setIsVisible(e);
+          setSimilarProductsList([]);
+          setUrlKey('');
+        }}>
+        {similarProductsList.length > 0 ? (
+          <FlatList
+            data={similarProductsList}
+            style={styles.modalContainerSimilar}
+            ListHeaderComponent={() => <SimilarProductHeader />}
+            progressViewOffset={100}
+            columnWrapperStyle={styles.columnWrapper}
+            numColumns={2}
+            renderItem={(item, index) => (
+              <SimilarData
+                item={item.item}
+                onItemPress={() =>
+                  navigation.navigate('PDP', {item: item.item})
+                }
+              />
+            )}
+            keyExtractor={(_, index) => index.toString()}
+            scrollEventThrottle={400}
+            decelerationRate="fast"
+          />
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255,255,255,0.5)',
+            }}>
+            <ActivityIndicator size="large" color="grey" />
+          </View>
+        )}
       </ModalTester>
     );
   };
@@ -243,33 +249,9 @@ export default function PlpScreen({navigation}) {
       </ModalTester>
     );
   };
-  const ListHeaderComponent = () => {
-    return (
-      <View style={styles.listHeaderContainer}>
-        {/* <Image
-            source={{
-              uri: '	https://ketchssr.greenhonchos.com/_nuxt/img/back-arrow.8055629.png',
-            }}
-            style={styles.leftArrow}
-          /> */}
-        <Text style={styles.heading}>KETCH</Text>
-      </View>
-    );
-  };
   return (
-    // <SafeAreaView
-    //   style={{
-    //     flex: 1,
-    //     backgroundColor: '#fff',
-    //     backfaceVisibility: 'visible',
-    //     borderBottomWidth: isVisible.similarVisible ? 1 : 0,
-    //     borderBottomColor: isVisible.similarVisible ? '#e6e6e6' : '',
-    //   }}>
     <View style={styles.container}>
-      {/* <SafeAreaView> */}
-      <SafeAreaView>
-        <ListHeaderComponent />
-      </SafeAreaView>
+      <Header onPress={() => alert('Sorry')} />
       {data.length == 0 ? (
         <View style={styles.loader}>
           <ActivityIndicator size="large" />
@@ -286,7 +268,7 @@ export default function PlpScreen({navigation}) {
             console.log('onEndReached');
             setPage(page + 1);
           }}
-          scrollEventThrottle={400}
+          // scrollEventThrottle={400}
           decelerationRate="fast"
           // onMomentumScrollBegin={()=>}
           getItemLayout={(data, index) => ({

@@ -8,3 +8,4 @@ export const uncheckedIcon = require('./unchecked.png');
 export const leftArrow = require('./leftArrow.png');
 export const rightArrow = require('./rightArrow.png');
 export const back = require('./back.png');
+export const cart = require('./cart.png');

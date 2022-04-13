@@ -10,6 +10,7 @@ function ModalTester({
   animationInType,
   animationOutType,
   backdropOpacity,
+  animationInTime,
 }) {
   return (
     // <View style={{flex: 1, backgroundColor: 'yellow'}}>
@@ -21,8 +22,8 @@ function ModalTester({
       useNativeDriver={true}
       backdropColor="rgba(0, 0, 0, 0.1)"
       backdropOpacity={backdropOpacity}
-      animationInTiming={500}
-      animationOutTiming={500}
+      animationInTiming={animationInTime || 500}
+      animationOutTiming={250}
       animationIn={animationInType}
       animationOut={animationOutType}
       onBackdropPress={() => onClose(false)}>

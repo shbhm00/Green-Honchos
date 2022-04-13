@@ -4,6 +4,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import PlpScreen from './screens/plpScreen';
 import PdpScreen from './screens/pdpScreen';
+import Cart from './screens/cart';
 const Stack = createNativeStackNavigator();
 
 function Router() {
@@ -19,6 +20,12 @@ function Router() {
           // options={{presentation: 'modal'}}
           name="PDP"
           component={PdpScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          // options={{presentation: 'modal'}}
+          name="Cart"
+          component={Cart}
           options={{headerShown: false}}
         />
       </Stack.Navigator>

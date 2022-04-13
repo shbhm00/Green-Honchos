@@ -1,25 +1,9 @@
-import {SET_INFO, DELETE_INFO, SET_EMP_ID} from './actionTypes';
+import {ADD_TO_CART} from './actionTypes';
 
-export const info = payload => {
+export const addToCart = payload => {
   return dispatch => {
     dispatch({
-      type: SET_INFO,
-      payload: payload,
-    });
-  };
-};
-export const EmployeeId = payload => {
-  return dispatch => {
-    dispatch({
-      type: SET_EMP_ID,
-      payload: payload,
-    });
-  };
-};
-export const deleteInfo = payload => {
-  return dispatch => {
-    dispatch({
-      type: DELETE_INFO,
+      type: ADD_TO_CART,
       payload: payload,
     });
   };

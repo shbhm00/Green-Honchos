@@ -13,18 +13,42 @@ import {
 } from 'react-native';
 import React, {useEffect, useRef} from 'react';
 import {vh, vw, normalize} from '../utils/dimension';
-import {leftArrow, rightArrow, back} from '../assests';
+import {leftArrow, rightArrow, back, cart} from '../assests';
+import {useSelector, useDispatch} from 'react-redux';
+import {addToCart} from '../actions/actions';
+import Header from '../components/header';
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
+
 export default function PdpScreen({route, navigation}) {
   console.log('route', route.params.item);
   let sliderLength = route.params.item.gallery.length;
+  const dispatch = useDispatch();
+  const selecter = useSelector(state => state);
+  let sizeofCart = selecter.Reducer.data.length;
   const flatlistRef = useRef();
   const scrollX = React.useRef(new Animated.Value(0)).current;
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [isLoading, setLoading] = React.useState(true);
+  const [productOptions, setProductOptions] = React.useState('');
 
-  const renderItem = ({item}) => {
+  const {
+    id_product,
+    product_options,
+    name,
+    group_id,
+    sku,
+    master_sku,
+    price,
+    qty_ordered,
+    selling_price,
+    store,
+  } = route.params.item;
+  const [size, setSize] = React.useState(
+    Object.values(route.params.item.variation),
+  );
+  console.log('size', size);
+  const renderItem = ({item, floatingNumber}) => {
     // let {height, width} = Image.getSize(item.image || '', screenWidth);
     return (
       <Image
@@ -45,29 +69,42 @@ export default function PdpScreen({route, navigation}) {
       index: index,
     });
   };
+
+  const addToCartPressed = async () => {
+    try {
+      const response = await fetch(
+        'https://ketchcart-pim.greenhonchos.com/api/v1/product/add-product',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            product_id: id_product,
+            product_parent_id: id_product,
+            product_options: productOptions || 'S',
+            name: name,
+            group_id: group_id,
+            sku: sku,
+            master_sku: master_sku,
+            price: price,
+            qty_ordered: qty_ordered || 1,
+            final_price: selling_price,
+            store: store,
+          }),
+        },
+      );
+      const json = await response.json();
+      console.log('json', json);
+    } catch (error) {
+      console.log('error', error);
+    }
+  };
+
   return (
     <View style={{flex: 1, backgroundColor: 'white'}}>
-      <SafeAreaView style={styles.headingContainer}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image source={back} style={styles.backIcon} />
-        </TouchableOpacity>
-        <Text style={styles.heading}>Ketch</Text>
-      </SafeAreaView>
-      {/* {isLoading == false ? (
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'red',
-            margin: 10,
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-          <ActivityIndicator size="large" color="#00a680" />
-        </View>
-      ) : (
-        <></>
-      )} */}
-      <ScrollView>
+      <Header onPress={() => navigation.goBack()} />
+      <ScrollView style={{flex: 1}}>
         <View style={styles.dotContainer}>
           {route.params.item.gallery.map((item, index) => {
             return (
@@ -132,6 +169,38 @@ export default function PdpScreen({route, navigation}) {
             </Text>
           </View>
         </View>
+        <View style={styles.sizeContainer}>
+          <Text style={styles.size}>Select Size</Text>
+          <View style={styles.sizeList}>
+            {size.map((item, index) => {
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.sizeItem,
+                    {
+                      borderColor:
+                        productOptions === item.size ? 'red' : 'black',
+                    },
+                  ]}
+                  onPress={() => {
+                    setProductOptions(item.size);
+                  }}>
+                  <Text
+                    style={[
+                      styles.sizeText,
+                      {
+                        color: productOptions === item.size ? 'red' : 'black',
+                      },
+                    ]}>
+                    {item.size}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+        <View style={{paddingBottom: vh(50)}}></View>
       </ScrollView>
       <View style={styles.footerContainer}>
         <View style={styles.footerButtonContainer}>
@@ -139,6 +208,7 @@ export default function PdpScreen({route, navigation}) {
             <Text style={styles.footerButtonText}>WishList</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            onPress={() => addToCartPressed()}
             style={[styles.footerButton, {backgroundColor: 'black'}]}>
             <Text style={[styles.footerButtonText, {color: 'white'}]}>
               Add to cart
@@ -171,7 +241,7 @@ const styles = StyleSheet.create({
   dotContainer: {
     flexDirection: 'row',
     position: 'absolute',
-    bottom: vw(150),
+    bottom: vw(330),
     zIndex: 1,
     left: vw(120),
   },
@@ -204,20 +274,20 @@ const styles = StyleSheet.create({
     marginTop: vh(10),
   },
   sellingPrice: {
-    fontSize: vw(20),
+    fontSize: vw(16),
     fontWeight: '500',
     letterSpacing: vw(0.2),
     marginRight: vw(10),
   },
   price: {
-    fontSize: vw(16),
+    fontSize: vw(14),
     letterSpacing: vw(0.5),
     marginRight: vw(10),
     color: '#979797',
     textDecorationLine: 'line-through',
   },
   discount: {
-    fontSize: vw(20),
+    fontSize: vw(16),
     fontWeight: '500',
     letterSpacing: vw(0.2),
     color: 'red',
@@ -249,7 +319,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e6e6e6',
     zIndex: 1,
-    bottom: 5,
+    bottom: 0,
     shadowRadius: 2,
     shadowOffset: {
       width: 0,
@@ -278,5 +348,53 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: vw(0.5),
     textTransform: 'uppercase',
+  },
+  cartIcon: {
+    height: vw(25),
+    width: vw(25),
+    marginLeft: screenWidth - vw(200),
+  },
+  floatingCount: {
+    height: vw(15),
+    width: vw(15),
+    borderRadius: vw(7.5),
+    backgroundColor: 'black',
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    right: -8,
+    top: -10,
+  },
+  floatingText: {
+    color: 'white',
+    fontSize: vw(10),
+  },
+  sizeContainer: {
+    marginTop: vh(20),
+    marginBottom: vh(20),
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#e6e6e6',
+  },
+  size: {
+    fontSize: vw(20),
+    fontWeight: '500',
+    letterSpacing: vw(0.5),
+    textTransform: 'uppercase',
+    marginTop: vh(10),
+  },
+  sizeItem: {
+    marginVertical: vh(10),
+    marginHorizontal: vw(5),
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: vw(40),
+    width: vw(40),
+    borderRadius: vw(25),
+    borderWidth: 1,
+  },
+  sizeList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
 });

@@ -121,16 +121,6 @@ export function Filter({onClose, data, filteredData, selectedData, filter}) {
                           checked={false}
                         />
                       )}
-                      {/* <ToggleCheckBox
-                        onPress={() => toggleOnPress(item, index)}
-                        // checked={
-                        //   [...checked].some(
-                        //     el => el.value_key === item.value_key,
-                        //   )
-                        //     ? true
-                        //     : false
-                        // }
-                      /> */}
                       {item.color_code ? (
                         <View
                           style={[
@@ -169,16 +159,6 @@ export function Filter({onClose, data, filteredData, selectedData, filter}) {
                           checked={false}
                         />
                       )}
-                      {/* <ToggleCheckBox
-                        onPress={() => toggleOnPress(item, index)}
-                        checked={
-                          [...checked].some(
-                            el => el.value_key === item.value_key,
-                          )
-                            ? true
-                            : false
-                        }
-                      /> */}
                       <Text style={styles.valueStyle}>{item.value}</Text>
                     </View>
                   );
@@ -318,7 +298,7 @@ const styles = StyleSheet.create({
     marginLeft: vw(10),
   },
   colorCode: {
-    height: vh(20),
+    height: vw(20),
     width: vw(20),
     borderRadius: vw(10),
     borderWidth: 0.5,
