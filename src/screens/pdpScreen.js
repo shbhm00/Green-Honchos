@@ -34,17 +34,17 @@ export default function PdpScreen({route, navigation}) {
     name,
     group_id,
     sku,
-    master_sku,
     price,
     qty_ordered,
     selling_price,
+    master_sku,
     store,
   } = route.params.item;
 
   const form = {
     product_id: id_product,
     product_parent_id: id_product,
-    product_options: productOptions || 'S',
+    product_options: productOptions,
     name: name,
     group_id: group_id,
     sku: sku,
@@ -99,13 +99,25 @@ export default function PdpScreen({route, navigation}) {
           },
         );
         const {data} = await response.json();
-        console.log('data', data);
-        dispatch(addToCart(data));
-        {
-          selector.CartReducer.cart_id && selector.CartReducer.cart_session
-            ? null
-            : dispatch(cartSession(data));
+        // console.log('json at pdp', await response.json());
+        if (data === 400) {
+          alert('Product is out of stock');
+        } else {
+          dispatch(addToCart(data));
+          {
+            selector.CartReducer.cart_id && selector.CartReducer.cart_session
+              ? null
+              : dispatch(cartSession(data));
+          }
+          alert('Product added to cart');
         }
+
+        // dispatch(addToCart(data));
+        // {
+        //   selector.CartReducer.cart_id && selector.CartReducer.cart_session
+        //     ? null
+        //     : dispatch(cartSession(data));
+        // }
       } catch (error) {
         console.log('error', error);
       }
@@ -206,7 +218,9 @@ export default function PdpScreen({route, navigation}) {
                   ]}
                   onPress={() => {
                     setProductOptions(item.size);
-                  }}>
+                  }}
+                  disabled={item.stock_status == 'in-stock' ? false : true}
+                  activeOpacity={item.stock_status == 'in-stock' ? 0.5 : 1}>
                   <Text
                     style={[
                       styles.sizeText,

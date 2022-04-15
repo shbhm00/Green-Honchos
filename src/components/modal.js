@@ -1,8 +1,7 @@
-import React, {useState} from 'react';
-import {Button, Text, View, Dimensions, StyleSheet} from 'react-native';
+import React from 'react';
+import {Dimensions} from 'react-native';
 import Modal from 'react-native-modal';
 const ScreenWidth = Dimensions.get('window').width;
-const ScreenHeight = Dimensions.get('window').height;
 function ModalTester({
   isVisible,
   onClose,

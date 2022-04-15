@@ -180,9 +180,10 @@ export default function PlpScreen({navigation}) {
             renderItem={(item, index) => (
               <SimilarData
                 item={item.item}
-                onItemPress={() =>
-                  navigation.navigate('PDP', {item: item.item})
-                }
+                onItemPress={() => {
+                  console.log('item on Similar', item.item);
+                  // navigation.navigate('PDP', {item: item.item});
+                }}
               />
             )}
             keyExtractor={(_, index) => index.toString()}
@@ -214,7 +215,7 @@ export default function PlpScreen({navigation}) {
         }}
         onItemPress={() =>
           setTimeout(() => {
-            navigation.navigate('PDP', {item});
+            navigation.navigate('PDP', {item: item});
           }, 100)
         }
       />
