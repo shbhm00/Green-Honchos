@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  SafeAreaView,
   Image,
   TouchableOpacity,
   FlatList,
@@ -9,15 +8,13 @@ import {
   Animated,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
-import React, {useEffect, useRef} from 'react';
+import React, {useRef} from 'react';
 import {vh, vw, normalize} from '../utils/dimension';
-import {leftArrow, rightArrow, back, cart} from '../assests';
+import {leftArrow, rightArrow} from '../assests';
 import {useSelector, useDispatch} from 'react-redux';
 import {addToCart, cartSession} from '../actions/actions';
 import Header from '../components/header';
-const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 
 export default function PdpScreen({route, navigation}) {
@@ -122,11 +119,11 @@ export default function PdpScreen({route, navigation}) {
       <Header
         onPress={() => navigation.goBack()}
         cartButtonPress={() => navigation.navigate('Cart')}
-        floatingText={
-          selector.Reducer.data.length > 0
-            ? selector.Reducer.data.products.length
-            : 0
-        }
+        // floatingText={
+        //   selector.Reducer.data.length > 0
+        //     ? selector.Reducer.data.products.length
+        //     : 0
+        // }
       />
       <ScrollView style={{flex: 1}}>
         <View style={styles.dotContainer}>

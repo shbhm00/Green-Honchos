@@ -256,7 +256,7 @@ export default function PlpScreen({navigation}) {
       <Header
         onPress={() => alert('Sorry')}
         cartButtonPress={() => navigation.navigate('Cart')}
-        floatingText={selector.length > 0 ? selector.products.length : 0}
+        // floatingText={selector.length > 0 ? selector.products.length : 0}
       />
       {data.length == 0 ? (
         <View style={styles.loader}>

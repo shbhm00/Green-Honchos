@@ -7,12 +7,21 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect} from 'react';
 import {cart, back} from '../assests';
 import {vh, vw} from '../utils/dimension';
+import {useSelector} from 'react-redux';
 const screenWidth = Dimensions.get('window').width;
 export default function Header({onPress, cartButtonPress, floatingText}) {
-  console.log('floatingText', floatingText);
+  const selector = useSelector(state => state.Reducer.data);
+  const getcartCout = () => {
+    if (selector.products && selector.products.length > 0)
+      return selector.products.length;
+    else return 0;
+  };
+  useEffect(() => {
+    getcartCout();
+  }, [selector]);
   return (
     <SafeAreaView style={styles.headingContainer}>
       <TouchableOpacity onPress={onPress}>
@@ -22,7 +31,8 @@ export default function Header({onPress, cartButtonPress, floatingText}) {
       <TouchableOpacity onPress={cartButtonPress}>
         <Image source={cart} style={styles.cartIcon} />
         <View style={styles.floatingCount}>
-          <Text style={styles.floatingText}>{floatingText}</Text>
+          {selector.products && selector.products.length > 0}
+          <Text style={styles.floatingText}>{getcartCout()}</Text>
         </View>
       </TouchableOpacity>
     </SafeAreaView>
